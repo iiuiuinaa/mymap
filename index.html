@@ -7,7 +7,7 @@
   <title>문화 시설 지도</title>
 
   <style>
-    /* 전체 요소의 크기 계산 방식을 통일합니다. */
+    /* 모든 요소의 크기 계산 방식을 통일합니다. */
     * {
       box-sizing: border-box;
     }
@@ -18,7 +18,7 @@
       color: #222;
     }
 
-    /* 화면을 검색 영역과 지도 영역으로 나눕니다. */
+    /* 화면을 왼쪽 검색창과 오른쪽 지도로 나눕니다. */
     .container {
       display: flex;
       width: 100%;
@@ -34,7 +34,7 @@
       flex-direction: column;
       padding: 22px 18px;
       border-right: 1px solid #ddd;
-      background: white;
+      background: #fff;
       z-index: 1;
     }
 
@@ -49,7 +49,7 @@
       font-size: 13px;
     }
 
-    /* 문화 시설 탭 버튼 */
+    /* 문화 시설 탭 */
     .tabs {
       display: flex;
       gap: 6px;
@@ -74,20 +74,15 @@
       font-weight: bold;
     }
 
-    .tab-button:focus-visible,
-    #searchButton:focus-visible {
-      outline: 2px solid #4285f4;
-      outline-offset: 2px;
-    }
-
-    /* 검색창 */
+    /* 장소 검색창 */
     .search-form {
       display: flex;
       gap: 8px;
     }
 
     #searchInput {
-      width: 100%;
+      flex: 1;
+      width: 0;
       min-width: 0;
       padding: 12px;
       border: 1px solid #ccc;
@@ -97,7 +92,7 @@
 
     #searchButton {
       flex-shrink: 0;
-      padding: 0 15px;
+      padding: 0 16px;
       border: none;
       border-radius: 8px;
       background: #4285f4;
@@ -110,35 +105,37 @@
       cursor: wait;
     }
 
-    /* 검색 상태와 범례 */
+    /* 검색 상태 안내 */
     #status {
-      margin: 14px 0 10px;
+      margin: 12px 0;
       color: #666;
       font-size: 12px;
       line-height: 1.6;
     }
 
+    /* 마커 색상 범례 */
     .legend {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 9px;
       padding: 10px 0;
       border-top: 1px solid #eee;
       border-bottom: 1px solid #eee;
-      font-size: 11px;
       color: #555;
+      font-size: 11px;
     }
 
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .legend-dot {
       width: 10px;
       height: 10px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
 
     .art-color {
@@ -177,7 +174,7 @@
     .result-item:hover,
     .result-item:focus {
       background: #f4f7ff;
-      outline: none;
+      outline: 2px solid #4285f4;
     }
 
     .place-name {
@@ -211,7 +208,7 @@
       background: #f0f2f5;
     }
 
-    /* 작은 화면에서는 위쪽에 목록, 아래쪽에 지도를 배치합니다. */
+    /* 작은 화면에서는 위쪽에 검색창, 아래쪽에 지도를 배치합니다. */
     @media (max-width: 600px) {
       .container {
         flex-direction: column;
@@ -249,55 +246,55 @@
 <body>
   <div class="container">
 
-    <!-- 왼쪽: 문화 시설 검색 및 결과 -->
+    <!-- 왼쪽: 문화 시설 검색 -->
     <aside class="sidebar">
       <h1>문화 시설 지도</h1>
       <p class="description">내 주변의 문화 공간을 찾아보세요.</p>
 
-      <!-- 탭을 선택하면 해당 시설을 검색합니다. -->
+      <!-- 세 가지 탭으로 문화 시설을 구분합니다. -->
       <div class="tabs" role="tablist" aria-label="문화 시설 종류">
         <button
-          class="tab-button active"
           type="button"
+          class="tab-button active"
+          data-tab="art"
           role="tab"
           aria-selected="true"
-          data-tab="art"
         >미술관</button>
 
         <button
-          class="tab-button"
           type="button"
+          class="tab-button"
+          data-tab="museum"
           role="tab"
           aria-selected="false"
-          data-tab="museum"
         >박물관</button>
 
         <button
-          class="tab-button"
           type="button"
+          class="tab-button"
+          data-tab="other"
           role="tab"
           aria-selected="false"
-          data-tab="other"
         >기타</button>
       </div>
 
-      <!-- 선택한 탭 안에서 추가로 검색할 수 있습니다. -->
+      <!-- 현재 선택한 탭 안에서 장소를 검색합니다. -->
       <form class="search-form" id="searchForm">
         <input
-          id="searchInput"
           type="text"
+          id="searchInput"
           placeholder="장소 이름 검색"
           aria-label="장소 이름 검색"
           autocomplete="off"
         >
-        <button id="searchButton" type="submit">검색</button>
+        <button type="submit" id="searchButton">검색</button>
       </form>
 
       <p id="status" role="status" aria-live="polite">
         지도를 불러오는 중입니다.
       </p>
 
-      <!-- 마커 색상 안내 -->
+      <!-- 마커 색상을 안내합니다. -->
       <div class="legend">
         <span class="legend-item">
           <span class="legend-dot art-color"></span>미술관
@@ -323,26 +320,32 @@
     <main id="map" aria-label="문화 시설 지도"></main>
   </div>
 
-  <!-- 카카오맵 SDK의 장소 검색 기능을 함께 불러옵니다. -->
+  <!-- 카카오 지도 SDK와 장소 검색 서비스를 불러옵니다. -->
   <script
     src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0bce71f318cc62bbe2897adf4bda0b34&libraries=services&autoload=false"
+    onerror="document.getElementById('status').textContent='카카오맵 SDK를 불러오지 못했습니다. 네트워크와 API 키를 확인하세요.'"
   ></script>
 
   <script>
-    // 기본 위치는 서울시청이며 지도 확대 레벨은 5입니다.
+    // 기본 지도 위치는 서울시청이며 확대 레벨은 5입니다.
     const defaultLatitude = 37.5665;
     const defaultLongitude = 126.9780;
     const mapLevel = 5;
 
-    // 현재 지도와 장소 검색에 필요한 변수를 선언합니다.
+    // 지도와 검색 기능에 필요한 변수를 선언합니다.
     let map = null;
     let placesService = null;
     let infoWindow = null;
-    let markers = [];
     let currentMarker = null;
-    let currentTab = "art";
-    let currentSearchId = 0;
     let currentPosition = null;
+
+    // 검색 마커와 검색 결과를 별도로 관리합니다.
+    let placeMarkers = [];
+    let placeMap = new Map();
+
+    // 탭 전환과 검색 요청을 구분하기 위한 번호입니다.
+    let currentTab = "art";
+    let searchRequestId = 0;
 
     const searchForm = document.getElementById("searchForm");
     const searchInput = document.getElementById("searchInput");
@@ -351,7 +354,7 @@
     const statusText = document.getElementById("status");
     const tabButtons = document.querySelectorAll(".tab-button");
 
-    // 탭마다 검색할 키워드를 설정합니다.
+    // 탭별 검색어와 기본 마커 색상을 설정합니다.
     const tabSettings = {
       art: {
         label: "미술관",
@@ -367,46 +370,70 @@
         label: "기타 문화 시설",
         keywords: [
           "전시관",
+          "전시장",
           "전시회",
           "박람회",
           "문화예술회관",
           "문화센터",
-          "갤러리"
+          "과학관",
+          "기념관"
         ],
-        color: "#fbc02d"
+        color: "#8e63ce"
       }
     };
 
-    // 상태 안내 문구를 변경합니다.
+    // 안내 문구를 변경합니다.
     function setStatus(message) {
       statusText.textContent = message;
     }
 
-    // 지도에 표시된 검색 마커를 모두 제거합니다.
-    function clearMarkers() {
-      markers.forEach(function(marker) {
+    // 기존 검색 마커와 장소 정보를 모두 초기화합니다.
+    function clearPlaces() {
+      placeMarkers.forEach(function(marker) {
         marker.setMap(null);
       });
 
-      markers = [];
+      placeMarkers = [];
+      placeMap.clear();
+      resultList.replaceChildren();
 
-      // 이전 장소의 팝업도 닫습니다.
       if (infoWindow) {
         infoWindow.close();
       }
     }
 
-    // 현재 위치 마커를 별도로 관리합니다.
-    function clearCurrentMarker() {
-      if (currentMarker) {
-        currentMarker.setMap(null);
-        currentMarker = null;
+    // 마커의 종류에 따라 색상을 결정합니다.
+    function getPlaceColor(place, tab) {
+      const text = (
+        (place.place_name || "") + " " +
+        (place.category_name || "")
+      ).toLowerCase();
+
+      if (
+        text.includes("미술관") ||
+        text.includes("아트 갤러리") ||
+        text.includes("art gallery")
+      ) {
+        return "#f06292";
       }
+
+      if (text.includes("박물관")) {
+        return "#4285f4";
+      }
+
+      if (
+        text.includes("전시") ||
+        text.includes("박람회") ||
+        text.includes("expo")
+      ) {
+        return "#fbc02d";
+      }
+
+      return tabSettings[tab].color;
     }
 
-    // 장소 종류에 맞는 마커 이미지를 생성합니다.
+    // SVG로 색상이 다른 지도 마커 이미지를 만듭니다.
     function createMarkerImage(color) {
-      // SVG로 원형 마커를 만들어 색상을 구분합니다.
       const svg = `
         <svg xmlns="http://www.w3.org/2000/svg"
              width="32" height="42" viewBox="0 0 32 42">
@@ -432,33 +459,7 @@
       );
     }
 
-    // 시설 종류를 판단해 마커 색상을 정합니다.
-    function getPlaceColor(place, tab) {
-      const text = (
-        place.place_name + " " + place.category_name
-      ).toLowerCase();
-
-      if (text.includes("미술관") || text.includes("art gallery")) {
-        return "#f06292";
-      }
-
-      if (text.includes("박물관")) {
-        return "#4285f4";
-      }
-
-      if (
-        text.includes("전시") ||
-        text.includes("박람회") ||
-        text.includes("expo")
-      ) {
-        return "#fbc02d";
-      }
-
-      // 이름으로 구분하기 어려운 시설은 선택한 탭의 색상을 사용합니다.
-      return tabSettings[tab].color;
-    }
-
-    // 장소 이름과 주소를 팝업으로 표시합니다.
+    // 장소 이름과 주소를 안전하게 팝업에 표시합니다.
     function showPlaceInfo(place, marker) {
       const content = document.createElement("div");
       content.style.cssText =
@@ -481,43 +482,46 @@
       infoWindow.open(map, marker);
     }
 
-    // 검색 결과를 지도에 표시합니다.
-    function addPlaceMarker(place, tab) {
+    // 검색 결과 하나를 지도와 왼쪽 목록에 추가합니다.
+    function addPlace(place, tab) {
+      const placeId = String(place.id);
+
+      // 같은 장소가 여러 검색어에서 나왔으면 한 번만 표시합니다.
+      if (placeMap.has(placeId)) {
+        return;
+      }
+
+      placeMap.set(placeId, place);
+
       const position = new kakao.maps.LatLng(
         Number(place.y),
         Number(place.x)
       );
 
-      const color = getPlaceColor(place, tab);
-
+      // 장소 종류에 맞는 색상의 마커를 생성합니다.
       const marker = new kakao.maps.Marker({
         map: map,
         position: position,
-        image: createMarkerImage(color),
+        image: createMarkerImage(getPlaceColor(place, tab)),
         title: place.place_name
       });
 
-      // 마커를 배열에 저장해 나중에 한꺼번에 삭제할 수 있게 합니다.
-      markers.push(marker);
+      placeMarkers.push(marker);
 
-      // 마커를 클릭하면 장소 이름과 주소를 표시합니다.
+      // 마커를 누르면 이름과 주소를 팝업으로 표시합니다.
       kakao.maps.event.addListener(marker, "click", function() {
         showPlaceInfo(place, marker);
       });
 
-      return marker;
-    }
-
-    // 검색 결과 목록에 장소 정보를 표시합니다.
-    function addPlaceToList(place, tab) {
+      // 왼쪽 결과 목록을 만듭니다.
       const item = document.createElement("article");
       item.className = "result-item";
       item.tabIndex = 0;
 
       const name = document.createElement("div");
       name.className = "place-name";
-      name.textContent = place.place_name;
       name.style.color = getPlaceColor(place, tab);
+      name.textContent = place.place_name;
 
       const category = document.createElement("div");
       category.className = "place-category";
@@ -533,7 +537,7 @@
 
       item.append(name, category, address);
 
-      // 전화번호가 있으면 추가로 표시합니다.
+      // 전화번호가 있으면 함께 표시합니다.
       if (place.phone) {
         const phone = document.createElement("div");
         phone.className = "place-phone";
@@ -541,7 +545,7 @@
         item.appendChild(phone);
       }
 
-      // 카카오맵 상세 페이지로 이동하는 링크를 추가합니다.
+      // 카카오맵 장소 상세 페이지 링크를 추가합니다.
       if (place.place_url) {
         const link = document.createElement("a");
         link.className = "place-link";
@@ -557,22 +561,11 @@
         item.appendChild(link);
       }
 
-      // 목록을 선택하면 해당 마커의 팝업을 엽니다.
+      // 목록을 선택하면 지도 중심과 팝업을 변경합니다.
       function selectPlace() {
-        const marker = markers.find(function(itemMarker) {
-          const position = itemMarker.getPosition();
-
-          return (
-            position.getLat() === Number(place.y) &&
-            position.getLng() === Number(place.x)
-          );
-        });
-
-        if (marker) {
-          map.setCenter(marker.getPosition());
-          map.setLevel(mapLevel);
-          showPlaceInfo(place, marker);
-        }
+        map.setCenter(position);
+        map.setLevel(mapLevel);
+        showPlaceInfo(place, marker);
       }
 
       item.addEventListener("click", selectPlace);
@@ -587,10 +580,11 @@
       resultList.appendChild(item);
     }
 
-    // 기타 탭에서는 미술관과 박물관을 제외합니다.
+    // 기타 탭에서 미술관과 박물관 결과를 제외합니다.
     function isOtherPlace(place) {
       const text = (
-        place.place_name + " " + place.category_name
+        (place.place_name || "") + " " +
+        (place.category_name || "")
       ).toLowerCase();
 
       return !(
@@ -600,108 +594,136 @@
       );
     }
 
-    // 여러 키워드의 검색 결과를 모읍니다.
-    function searchTabPlaces(tab, extraKeyword) {
-      const searchId = ++currentSearchId;
+    // 현재 탭에 맞는 장소를 검색합니다.
+    function searchPlaces(tab, customKeyword) {
+      if (!map || !placesService) {
+        setStatus("지도가 준비되지 않았습니다. 잠시 후 다시 시도하세요.");
+        return;
+      }
+
+      const requestId = ++searchRequestId;
       const settings = tabSettings[tab];
 
-      // 탭을 바꾸면 기존 목록과 마커를 먼저 지웁니다.
-      clearMarkers();
-      resultList.replaceChildren();
+      // 검색을 시작하면 기존 결과를 지웁니다.
+      clearPlaces();
+      searchButton.disabled = true;
 
-      const keywords = extraKeyword
-        ? [extraKeyword]
+      const keyword = customKeyword.trim();
+
+      // 직접 입력한 검색어가 있으면 그 검색어를 우선 사용합니다.
+      const keywords = keyword
+        ? [keyword]
         : settings.keywords;
 
-      const uniquePlaces = new Map();
-      let completedSearches = 0;
+      let completedCount = 0;
+      let errorCount = 0;
+      let zeroResultCount = 0;
 
-      searchButton.disabled = true;
       setStatus(settings.label + " 검색 중입니다.");
 
-      // 각 키워드를 검색하고 결과를 합칩니다.
-      keywords.forEach(function(keyword) {
+      // 여러 검색어의 결과를 하나의 목록으로 합칩니다.
+      keywords.forEach(function(searchKeyword) {
+        // 지도에 현재 보이는 영역을 기준으로 검색합니다.
+        const options = {
+          useMapBounds: true,
+          sort: kakao.maps.services.SortBy.ACCURACY,
+          size: 15
+        };
+
         placesService.keywordSearch(
-          keyword,
+          searchKeyword,
           function(data, status, pagination) {
-            // 다른 탭의 검색이 시작되었다면 이전 결과를 무시합니다.
-            if (searchId !== currentSearchId) {
+            // 이전 탭의 검색 결과는 화면에 반영하지 않습니다.
+            if (requestId !== searchRequestId) {
               return;
             }
 
+            console.log(
+              "[문화 시설 검색]",
+              searchKeyword,
+              "상태:",
+              status,
+              "결과 수:",
+              data ? data.length : 0
+            );
+
             if (status === kakao.maps.services.Status.OK) {
               data.forEach(function(place) {
-                // 장소 ID를 기준으로 중복 결과를 제거합니다.
-                if (
-                  tab === "other" &&
-                  !isOtherPlace(place)
-                ) {
+                // 기타 탭에서는 미술관과 박물관을 제외합니다.
+                if (tab === "other" && !isOtherPlace(place)) {
                   return;
                 }
 
-                if (!uniquePlaces.has(place.id)) {
-                  uniquePlaces.set(place.id, place);
-                }
-              });
-            }
-
-            // 모든 키워드 검색이 끝나면 화면을 갱신합니다.
-            completedSearches++;
-
-            if (completedSearches === keywords.length) {
-              const places = Array.from(uniquePlaces.values());
-
-              // 현재 위치와 가까운 장소를 먼저 보여줍니다.
-              if (currentPosition) {
-                places.sort(function(a, b) {
-                  const distanceA = new kakao.maps.LatLng(
-                    Number(a.y), Number(a.x)
-                  ).toCoords();
-
-                  const distanceB = new kakao.maps.LatLng(
-                    Number(b.y), Number(b.x)
-                  ).toCoords();
-
-                  // 좌표의 실제 거리 계산은 카카오맵의 거리 함수를 사용합니다.
-                  const userCoords = currentPosition.toCoords();
-
-                  return (
-                    distanceA.distanceFrom(userCoords) -
-                    distanceB.distanceFrom(userCoords)
-                  );
-                });
-              }
-
-              if (places.length === 0) {
-                setStatus("검색 결과가 없습니다. 다른 지역이나 검색어를 시도해 보세요.");
-                searchButton.disabled = false;
-                return;
-              }
-
-              places.forEach(function(place) {
-                addPlaceMarker(place, tab);
-                addPlaceToList(place, tab);
+                addPlace(place, tab);
               });
 
-              setStatus(
-                settings.label + " 검색 결과 " +
-                places.length + "개입니다."
+              // 검색 결과의 다음 페이지도 순서대로 가져옵니다.
+              if (pagination && pagination.hasNextPage) {
+                pagination.nextPage();
+              } else {
+                finishSearch();
+              }
+
+            } else if (
+              status === kakao.maps.services.Status.ZERO_RESULT
+            ) {
+              zeroResultCount++;
+              finishSearch();
+
+            } else {
+              errorCount++;
+              console.error(
+                "카카오 장소 검색 오류:",
+                searchKeyword,
+                status
               );
-
-              searchButton.disabled = false;
+              finishSearch();
             }
           },
-          {
-            location: map.getCenter(),
-            radius: 20000,
-            sort: kakao.maps.services.SortBy.DISTANCE,
-            size: 15
-          }
+          options
         );
       });
+
+      // 모든 검색 요청이 끝났을 때 상태를 표시합니다.
+      function finishSearch() {
+        completedCount++;
+
+        if (completedCount < keywords.length) {
+          return;
+        }
+
+        // 탭을 바꿨다면 이전 검색의 상태를 표시하지 않습니다.
+        if (requestId !== searchRequestId) {
+          return;
+        }
+
+        searchButton.disabled = false;
+
+        const resultCount = placeMap.size;
+
+        if (resultCount > 0) {
+          setStatus(
+            settings.label + " 검색 결과 " +
+            resultCount + "개를 표시했습니다."
+          );
+        } else if (errorCount > 0) {
+          setStatus(
+            "검색 API 오류가 발생했습니다. " +
+            "F12의 Console에서 검색 상태와 API 설정을 확인하세요."
+          );
+        } else if (zeroResultCount === keywords.length) {
+          setStatus(
+            "검색 결과가 없습니다. 지도를 이동하거나 다른 검색어를 입력해 보세요."
+          );
+        } else {
+          setStatus(
+            "검색 결과가 없습니다. 다른 지역이나 검색어를 시도해 보세요."
+          );
+        }
+      }
     }
 
-    // 탭 버튼을 클릭하면 해당 시설을 검색합니다.
+    // 탭을 누르면 이전 결과를 지우고 새 검색을 시작합니다.
     tabButtons.forEach(function(button) {
       button.addEventListener("click", function() {
         currentTab = button.dataset.tab;
@@ -717,38 +739,42 @@
         });
 
         searchInput.value = "";
-        searchTabPlaces(currentTab, "");
+        searchPlaces(currentTab, "");
       });
     });
 
-    // 검색창에 입력한 단어로 현재 탭의 장소를 검색합니다.
+    // 검색 버튼 또는 Enter 키로 검색합니다.
     searchForm.addEventListener("submit", function(event) {
       event.preventDefault();
-      searchTabPlaces(currentTab, searchInput.value.trim());
+
+      searchPlaces(
+        currentTab,
+        searchInput.value.trim()
+      );
     });
 
-    // 현재 위치를 가져와 지도에 별도의 마커를 표시합니다.
+    // 현재 위치를 별도의 마커로 표시합니다.
     function locateUser() {
       if (!navigator.geolocation) {
-        setStatus("위치 기능을 사용할 수 없습니다. 서울시청을 중심으로 표시합니다.");
-        searchTabPlaces(currentTab, "");
+        setStatus("현재 위치 기능을 사용할 수 없습니다. 기본 위치를 표시합니다.");
+        searchPlaces(currentTab, "");
         return;
       }
 
-      setStatus("현재 위치 권한을 확인하고 있습니다.");
+      setStatus("현재 위치를 확인하고 있습니다.");
 
       navigator.geolocation.getCurrentPosition(
         function(position) {
-          // 위치 정보를 지도 좌표로 변환합니다.
           currentPosition = new kakao.maps.LatLng(
             position.coords.latitude,
             position.coords.longitude
           );
 
+          // 지도 중심을 현재 위치로 이동합니다.
           map.setCenter(currentPosition);
           map.setLevel(mapLevel);
 
-          // 현재 위치 마커는 검색 마커와 별도로 유지합니다.
+          // 현재 위치 마커를 생성합니다.
           currentMarker = new kakao.maps.Marker({
             map: map,
             position: currentPosition,
@@ -756,7 +782,7 @@
             title: "내 현재 위치"
           });
 
-          // 현재 위치 마커를 클릭하면 안내 팝업을 표시합니다.
+          // 현재 위치 마커에도 팝업을 연결합니다.
           kakao.maps.event.addListener(
             currentMarker,
             "click",
@@ -770,19 +796,20 @@
             }
           );
 
-          // 위치를 확인한 후 기본 탭의 검색을 시작합니다.
-          searchTabPlaces(currentTab, "");
+          // 현재 위치를 가져온 다음 첫 번째 탭을 검색합니다.
+          searchPlaces(currentTab, "");
         },
         function(error) {
-          // 위치 권한이 없어도 기본 위치에서 검색할 수 있습니다.
+          // 위치 권한이 거부되어도 기본 위치에서 검색합니다.
+          currentPosition = null;
+
           if (error.code === error.PERMISSION_DENIED) {
             setStatus("위치 권한이 거부되었습니다. 서울시청 주변을 검색합니다.");
           } else {
-            setStatus("현재 위치를 확인하지 못했습니다. 서울시청 주변을 검색합니다.");
+            setStatus("현재 위치를 확인하지 못했습니다. 기본 위치를 검색합니다.");
           }
 
-          currentPosition = null;
-          searchTabPlaces(currentTab, "");
+          searchPlaces(currentTab, "");
         },
         {
           enableHighAccuracy: false,
@@ -792,11 +819,11 @@
       );
     }
 
-    // SDK 준비가 완료된 뒤에만 지도와 검색 기능을 실행합니다.
+    // 카카오맵 SDK가 준비된 후 지도와 검색 기능을 실행합니다.
     if (window.kakao && window.kakao.maps) {
       kakao.maps.load(function() {
         try {
-          // 지도를 먼저 생성합니다.
+          // 지도 객체를 먼저 생성합니다.
           map = new kakao.maps.Map(
             document.getElementById("map"),
             {
@@ -808,23 +835,27 @@
             }
           );
 
-          // 지도 생성 이후 검색 객체를 초기화합니다.
+          // 지도 생성 후 검색 서비스와 팝업을 초기화합니다.
           placesService = new kakao.maps.services.Places(map);
 
           infoWindow = new kakao.maps.InfoWindow({
             zIndex: 10
           });
 
-          // 지도가 준비된 뒤 현재 위치를 확인합니다.
+          // 지도와 검색 서비스가 준비된 다음 위치를 확인합니다.
           locateUser();
 
         } catch (error) {
           console.error("지도 초기화 오류:", error);
-          setStatus("지도를 초기화하지 못했습니다. API 키와 웹 도메인을 확인해 주세요.");
+          setStatus(
+            "지도 초기화에 실패했습니다. JavaScript 키와 Web 도메인을 확인하세요."
+          );
         }
       });
     } else {
-      setStatus("카카오맵 SDK를 불러오지 못했습니다. 네트워크와 API 설정을 확인해 주세요.");
+      setStatus(
+        "카카오맵 SDK를 불러오지 못했습니다. 네트워크, JavaScript 키, Web 도메인을 확인하세요."
+      );
     }
   </script>
 </body>
